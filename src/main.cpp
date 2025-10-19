@@ -3,10 +3,12 @@
 #if __has_include ("BluetoothA2DP.h")
 
 #include "BluetoothA2DPSink.h"
+// #include "BluetoothA2DPSource.h"
 
 BluetoothA2DPSink a2dp_sink;
-bool is_active = true;
+// BluetoothA2DPSource a2dp_source;
 
+bool is_active = true;
 bool sent_connected_message = false;
 
 const int pp_pin = 32; // GPIO pin for the pause/play button
@@ -31,11 +33,15 @@ int prev_last_state = LOW;
 
 void avrc_metadata_callback (uint8_t id, const uint8_t *text) {
   Serial.printf ("==> AVRC metadata rsp: attribute id 0x%x, %s\n", id, text);
-  if (id == ESP_AVRC_MD_ATTR_PLAYING_TIME) {
-    uint32_t playtime = String ((char*) text).toInt ();
-    Serial.printf ("==> Playing time is %d ms (%d seconds)\n", playtime, (int) round (playtime/1000.0));
-  }
+  // if (id == ESP_AVRC_MD_ATTR_PLAYING_TIME) {
+  //   uint32_t playtime = String ((char*) text).toInt ();
+  //   Serial.printf ("==> Playing time is %d ms (%d seconds)\n", playtime, (int) round (playtime/1000.0));
+  // }
 }
+
+// int32_t get_sound_data (uint8_t* data, int32_t byte_count) {
+//   return byte_count;
+// }
 
 void setup () {
   Serial.begin (115200);
@@ -44,9 +50,13 @@ void setup () {
   pinMode (next_pin, INPUT);
   pinMode (prev_pin, INPUT);
 
-  a2dp_sink.set_avrc_metadata_attribute_mask (ESP_AVRC_MD_ATTR_TITLE | ESP_AVRC_MD_ATTR_ARTIST | ESP_AVRC_MD_ATTR_ALBUM | ESP_AVRC_MD_ATTR_PLAYING_TIME );
+  a2dp_sink.set_avrc_metadata_attribute_mask (ESP_AVRC_MD_ATTR_TITLE | ESP_AVRC_MD_ATTR_ARTIST | ESP_AVRC_MD_ATTR_ALBUM );
   a2dp_sink.set_avrc_metadata_callback (avrc_metadata_callback);
   a2dp_sink.start ("MyMusic");
+  Serial.println ("Started bluetooth");
+
+  //a2dp_source.set_data_callback (get_sound_data);
+  //a2dp_source.start ("MyMusic");//"Stark 2.0 Speaker");
 }
 
 void loop () {
