@@ -1,12 +1,12 @@
 #include <Arduino.h>
+#include "Preferences.h"
 
 #if __has_include ("BluetoothA2DP.h")
 
 #include "BluetoothA2DPSink.h"
-// #include "BluetoothA2DPSource.h"
 
 BluetoothA2DPSink a2dp_sink;
-// BluetoothA2DPSource a2dp_source;
+Preferences preferences;
 
 bool is_active = true;
 bool sent_connected_message = false;
@@ -39,10 +39,6 @@ void avrc_metadata_callback (uint8_t id, const uint8_t *text) {
   // }
 }
 
-// int32_t get_sound_data (uint8_t* data, int32_t byte_count) {
-//   return byte_count;
-// }
-
 void setup () {
   Serial.begin (115200);
 
@@ -55,8 +51,31 @@ void setup () {
   a2dp_sink.start ("MyMusic");
   Serial.println ("Started bluetooth");
 
-  //a2dp_source.set_data_callback (get_sound_data);
-  //a2dp_source.start ("MyMusic");//"Stark 2.0 Speaker");
+  // preferences.begin ("test", false);
+
+  // Serial.println (preferences.isKey ("apple"));
+  // if (!preferences.isKey ("apple")) {
+  //   Serial.println (preferences.getString ("appple"));
+  // } else {
+  //   preferences.putString ("apple", "jack");
+  //   Serial.println ("created new key-value pair: apple, jack");
+  // }
+  // preferences.end ();
+
+
+  preferences.begin ("connections", true);
+  bool prev_init = preferences.isKey ("prev");
+  if (prev_init) {
+    esp_bd_addr_t prev_address;
+    preferences.getBytes ("prev", prev_address, ESP_BD_ADDR_LEN);
+    a2dp_sink.connect_to (prev_address);
+    Serial.print ("Reconnected to previously connected device: ");
+    Serial.println (a2dp_sink.to_str (prev_address));
+  }
+  preferences.end ();
+
+  // Serial.println (a2dp_sink.to_str (*(a2dp_sink.get_last_peer_address ())));
+  // a2dp_sink.reconnect ();
 }
 
 void loop () {
@@ -122,22 +141,19 @@ void loop () {
   if (a2dp_sink.is_connected () && !sent_connected_message) {
     sent_connected_message = true;
     Serial.println ("Device connected");
+
+    preferences.begin ("connections", false);
+    preferences.putBytes ("prev", a2dp_sink.get_current_peer_address (), ESP_BD_ADDR_LEN);
+    Serial.print ("Put address to memory: ");
+    Serial.println (a2dp_sink.to_str (*(a2dp_sink.get_current_peer_address ())));
+    preferences.end ();
+
+    // Serial.println (a2dp_sink.to_str (*(a2dp_sink.get_current_peer_address ())));
+    // Serial.println (a2dp_sink.to_str (*(a2dp_sink.get_last_peer_address ())));
   } else if (!a2dp_sink.is_connected ())    sent_connected_message = false;
-
-
-  // if (a2dp_sink.get_audio_state() == ESP_A2D_AUDIO_STATE_STARTED) {
-  //   delay(10000);
-  //   Serial.println("changing state...");
-  //   is_active = !is_active;
-  //   if (is_active) {
-  //     Serial.println("play");
-  //     a2dp_sink.play();
-  //   } else {
-  //     Serial.println("pause");
-  //     a2dp_sink.pause();
-  //   }
-  // }
 }
+
+
 
 #else
 
