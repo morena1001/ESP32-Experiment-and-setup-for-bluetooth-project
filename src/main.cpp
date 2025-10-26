@@ -10,6 +10,7 @@ Preferences preferences;
 
 bool is_active = true;
 bool sent_connected_message = false;
+bool sent_disconnected_message = false;
 
 const int pp_pin = 32; // GPIO pin for the pause/play button
 const int next_pin = 33; // GPIO pin for the next button
@@ -39,6 +40,21 @@ void avrc_metadata_callback (uint8_t id, const uint8_t *text) {
   // }
 }
 
+void avrc_rn_playstatus_callback (esp_avrc_playback_stat_t playback) {
+  switch (playback) {
+    case esp_avrc_playback_stat_t::ESP_AVRC_PLAYBACK_PAUSED:
+      Serial.println ("Stopped.");
+      is_active = false;
+      break;
+    case esp_avrc_playback_stat_t::ESP_AVRC_PLAYBACK_PLAYING:
+      Serial.println ("Playing.");
+      is_active = true;
+      break;
+    default:
+      Serial.printf ("Got unknown playback status %d\n", playback);
+  }
+}
+
 void setup () {
   Serial.begin (115200);
 
@@ -48,34 +64,25 @@ void setup () {
 
   a2dp_sink.set_avrc_metadata_attribute_mask (ESP_AVRC_MD_ATTR_TITLE | ESP_AVRC_MD_ATTR_ARTIST | ESP_AVRC_MD_ATTR_ALBUM );
   a2dp_sink.set_avrc_metadata_callback (avrc_metadata_callback);
-  a2dp_sink.start ("MyMusic");
+  a2dp_sink.set_avrc_rn_playstatus_callback (avrc_rn_playstatus_callback);
+
+  a2dp_sink.start ("MyMusic", true);
   Serial.println ("Started bluetooth");
-
-  // preferences.begin ("test", false);
-
-  // Serial.println (preferences.isKey ("apple"));
-  // if (!preferences.isKey ("apple")) {
-  //   Serial.println (preferences.getString ("appple"));
-  // } else {
-  //   preferences.putString ("apple", "jack");
-  //   Serial.println ("created new key-value pair: apple, jack");
-  // }
-  // preferences.end ();
-
 
   preferences.begin ("connections", true);
   bool prev_init = preferences.isKey ("prev");
   if (prev_init) {
     esp_bd_addr_t prev_address;
     preferences.getBytes ("prev", prev_address, ESP_BD_ADDR_LEN);
-    a2dp_sink.connect_to (prev_address);
-    Serial.print ("Reconnected to previously connected device: ");
-    Serial.println (a2dp_sink.to_str (prev_address));
+    Serial.print ("Checking to see if ");
+    Serial.print (a2dp_sink.to_str (prev_address));
+    Serial.println (" Connects");
+    if (a2dp_sink.connect_to (prev_address)) {
+      Serial.print ("Reconnected to previously connected device: ");
+      Serial.println (a2dp_sink.to_str (prev_address));
+    }
   }
   preferences.end ();
-
-  // Serial.println (a2dp_sink.to_str (*(a2dp_sink.get_last_peer_address ())));
-  // a2dp_sink.reconnect ();
 }
 
 void loop () {
@@ -140,6 +147,7 @@ void loop () {
   // Send a device conntected message once if a device is connected
   if (a2dp_sink.is_connected () && !sent_connected_message) {
     sent_connected_message = true;
+    sent_disconnected_message = false;
     Serial.println ("Device connected");
 
     preferences.begin ("connections", false);
@@ -147,10 +155,11 @@ void loop () {
     Serial.print ("Put address to memory: ");
     Serial.println (a2dp_sink.to_str (*(a2dp_sink.get_current_peer_address ())));
     preferences.end ();
-
-    // Serial.println (a2dp_sink.to_str (*(a2dp_sink.get_current_peer_address ())));
-    // Serial.println (a2dp_sink.to_str (*(a2dp_sink.get_last_peer_address ())));
-  } else if (!a2dp_sink.is_connected ())    sent_connected_message = false;
+  } else if (!a2dp_sink.is_connected () && !sent_disconnected_message) {
+    sent_disconnected_message = true;
+    sent_connected_message = false;
+    Serial.println ("Device disconnected");
+  }
 }
 
 
