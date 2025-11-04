@@ -24,7 +24,7 @@
 
 #define RESETPIN 12
 
-#define FMSTATION 10370      // 10230 == 102.30 MHz
+#define FMSTATION 8950      // 10230 == 102.30 MHz
 
 Adafruit_Si4713 radio = Adafruit_Si4713(RESETPIN);
 
