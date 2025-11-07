@@ -1,17 +1,17 @@
-#include <Arduino.h>
-#include <Wire.h>
-#include <Adafruit_Si4713.h>
-#include "Preferences.h"
-#include "BluetoothA2DPSink.h"
+// #include <Arduino.h>
+// #include <Wire.h>
+// #include <Adafruit_Si4713.h>
+// #include "Preferences.h"
+// #include "BluetoothA2DPSink.h"
 // #include "AudioTools.h"
 
-#define RESETPIN  12
-#define FMSTATION 9390
+// #define RESETPIN  12
+// #define FMSTATION 9390
 
-Adafruit_Si4713 radio = Adafruit_Si4713 (RESETPIN);
-AnalogAudioStream out;
-BluetoothA2DPSink a2dp_sink;// (out);
-Preferences preferences;
+// Adafruit_Si4713 radio = Adafruit_Si4713 (RESETPIN);
+// AnalogAudioStream out;
+// BluetoothA2DPSink a2dp_sink (out);
+// Preferences preferences;
 
 // bool is_active = true;
 // bool sent_connected_message = false;
@@ -60,7 +60,7 @@ Preferences preferences;
 //   }
 // }
 
-void setup () {
+// void setup () {
 //   Serial.begin (115200);
 //   // Serial.println ("Starting radio");
 
@@ -104,9 +104,9 @@ void setup () {
 //     }
 //   }
 //   preferences.end ();
-}
+// }
 
-void loop () {
+// void loop () {
 //   // Read from the input button
 //   int pp_reading = digitalRead (pp_pin);
 //   int next_reading = digitalRead (next_pin);
@@ -181,4 +181,4 @@ void loop () {
 //     sent_connected_message = false;
 //     // Serial.println ("Device disconnected");
 //   }
-}
+// }
