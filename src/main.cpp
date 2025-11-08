@@ -8,6 +8,31 @@
 #define RESETPIN  13
 #define FMSTATION 9390
 
+/*
+if (i2c_dev)
+    delete i2c_dev;
+    Serial.println ("HELLO");
+    reset();
+    Serial.println ("HELLO 1");
+  i2c_dev = new Adafruit_I2CDevice(addr, theWire);
+  if (!i2c_dev->begin()) {
+    // i2c_dev = new Adafruit_I2CDevice (SI4710_ADDR0, theWire);
+    // if (!i2c_dev->begin ()) 
+      return false;
+  }
+  Serial.println ("HELLO 2");
+  
+  powerUp();
+  Serial.println ("HELLO 3");
+  Serial.println (getRev ());
+  // check for Si4713
+  if (getRev() != 13)
+  return false;
+  Serial.println ("HELLO 4");
+
+  return true;
+*/
+
 Adafruit_Si4713 radio = Adafruit_Si4713 (RESETPIN);
 AnalogAudioStream out;
 BluetoothA2DPSink a2dp_sink (out);
@@ -79,8 +104,8 @@ void setup () {
   Serial.println(FMSTATION % 100);
   radio.tuneFM(FMSTATION); // 102.3 mhz
 
-  dac_output_enable (DAC_CHANNEL_1);
-  dac_output_enable (DAC_CHANNEL_2);
+  // dac_output_enable (DAC_CHANNEL_1);
+  // dac_output_enable (DAC_CHANNEL_2);
 
   pinMode (pp_pin, INPUT);
   pinMode (next_pin, INPUT);
