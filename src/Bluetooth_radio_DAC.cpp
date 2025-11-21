@@ -4,13 +4,13 @@
 #include <Preferences.h>
 #include <BluetoothA2DPSink.h>
 #include <driver/dac.h>
+#include "I2S.h"
 
 #define RESETPIN    13
 #define FMSTATION   9390
 
 Adafruit_Si4713 radio = Adafruit_Si4713 (RESETPIN);
-I2SStream i2s;
-BluetoothA2DPSink a2dp_sink (i2s);
+BluetoothA2DPSink a2dp_sink (I2S);
 Preferences preferences;
 
 bool is_active = true;
@@ -37,6 +37,11 @@ int pp_last_state = LOW;
 int next_last_state = LOW;  
 int prev_last_state = LOW; 
 
+const uint8_t I2S_SCK = 15;
+const uint8_t I2S_WS = 26;
+const uint8_t I2S_SDOUT = 25;
+const uint8_t I2S_SDIN = 14;
+
 void avrc_metadata_callback (uint8_t id, const uint8_t* text) {
     Serial.printf ("==> AVRC metdata rsp: attribute id 0x%x, %s\n", id, text);
 }
@@ -56,6 +61,18 @@ void avrc_rn_playstatus_callback (esp_avrc_playback_stat_t playback) {
 
 void setup () {
     Serial.begin (115200);
+
+    I2S.setSckPin (I2S_SCK);
+    I2S.setFsPin (I2S_WS);
+    I2S.setDataInPin (I2S_SDIN);
+    I2S.setDataOutPin (I2S_SDOUT);
+    if (!I2S.begin (I2S_PHILIPS_MODE, 4410, 16)) {
+        Serial.println ("Failed to initialize I2S!");
+        while (!I2S.begin (I2S_PHILIPS_MODE, 4410, 16)) {
+            Serial.println ("Failed to initialize I2S!");
+        }
+    };
+
     Serial.println ("Starting radio");
 
     if (!radio.begin ()) {
