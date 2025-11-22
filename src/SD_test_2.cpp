@@ -371,43 +371,43 @@ void setup () {
 
 void loop () {}
 
-bool Between (uint32_t enc_byte, uint32_t low, uint32_t high) {
+inline bool Between (uint32_t enc_byte, uint32_t low, uint32_t high) {
     return (enc_byte >= low && enc_byte <= high);
 }
 
 uint8_t Check_Location (uint32_t enc_byte) {
     if (enc_byte == 0)  return FONT_ERROR;
-    if (Between (enc_byte, 0x0, 0x7F))              return latin;
-    if (Between (enc_byte, 0xCDB0, 0xDEBF))         return cyrillic_greek;
-    if (Between (enc_byte, 0xC280, 0xC98F))         return ex_latin;
-    if (Between (enc_byte, 0xE38180, 0xE383BF))     return japanese;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return hangul_1;
-
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return hangul_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return hangul_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return hangul_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return hangul_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return hangul_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return hangul_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return hangul_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
-    if (Between (enc_byte, 0xE18480, 0xE187BF))     return cj_1;
+    if (Between (enc_byte, 0x0, 0x7F))                  return latin;
+    if (Between (enc_byte, 0xCDB0, 0xDEBF))             return cyrillic_greek;
+    if (Between (enc_byte, 0xC280, 0xC98F))             return ex_latin;
+    if (Between (enc_byte, 0xE38180, 0xE383BF))         return japanese;
+    if (Between (enc_byte, 0xE18480, 0xE187BF))         return hangul_1;
+    if (Between (enc_byte, 0xE384B1, 0xE3868E))         return hangul_2;
+    if (Between (enc_byte, 0xEAB080, 0xEB8FBF))         return hangul_3_1;
+    if (Between (enc_byte, 0xEB9080, 0xEBAFBF))         return hangul_3_2;
+    if (Between (enc_byte, 0xEBB080, 0xEC8FBF))         return hangul_4_1;
+    if (Between (enc_byte, 0xEC9080, 0xECAFBF))         return hangul_4_2;
+    if (Between (enc_byte, 0xECB080, 0xED8FBF))         return hangul_5_1;
+    if (Between (enc_byte, 0xED9080, 0xED9EA3))         return hangul_5_2;
+    if (Between (enc_byte, 0xE38080, 0xE380BF))         return cj_1;
+    if (Between (enc_byte, 0xE39080, 0xE3AFBF))         return cj_2_1;
+    if (Between (enc_byte, 0xE3B080, 0xE48FBF))         return cj_2_2;
+    if (Between (enc_byte, 0xE49080, 0xE4B6BF))         return cj_3;
+    if (Between (enc_byte, 0xE4B880, 0xE597BF))         return cj_4_1;
+    if (Between (enc_byte, 0xE59880, 0xE5B7BF))         return cj_4_2;
+    if (Between (enc_byte, 0xE5B880, 0xE697BF))         return cj_5_1;
+    if (Between (enc_byte, 0xE69880, 0xE6B7BF))         return cj_5_2;
+    if (Between (enc_byte, 0xE6B880, 0xE797BF))         return cj_6_1;
+    if (Between (enc_byte, 0xE79880, 0xE7B7BF))         return cj_6_2;
+    if (Between (enc_byte, 0xE7B880, 0xE897BF))         return cj_7_1;
+    if (Between (enc_byte, 0xE89880, 0xE8B7BF))         return cj_7_2;
+    if (Between (enc_byte, 0xE8B880, 0xE997BF))         return cj_8_1;
+    if (Between (enc_byte, 0xE99880, 0xE9B7BF))         return cj_8_2;
+    if (Between (enc_byte, 0xE9B880, 0xE9BFBF))         return cj_9;
+    if (Between (enc_byte, 0xEFA480, 0xEFA9AD))         return cj_10;
+    if (Between (enc_byte, 0xF0A08080, 0xF0ADBFBF))     return cj_11;
+    if (Between (enc_byte, 0xF0B08080, 0xF0B1BFBF))     return cj_12;
+    return FONT_ERROR;
 }
 
 void listDir (FS &fs, const char* dirname, uint8_t levels) {
