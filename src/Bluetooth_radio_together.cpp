@@ -124,7 +124,7 @@
 //     esp_bd_addr_t prev_address;
 //     preferences.getBytes ("prev", prev_address, ESP_BD_ADDR_LEN);
 //     Serial.print ("Checking to see if ");
-    // Serial.print (a2dp_sink.to_str (prev_address));
+//     Serial.print (a2dp_sink.to_str (prev_address));
 //     Serial.println (" Connects");
 //     if (a2dp_sink.connect_to (prev_address)) {
 //       Serial.print ("Reconnected to previously connected device: ");

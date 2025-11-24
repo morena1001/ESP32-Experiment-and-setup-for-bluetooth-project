@@ -109,264 +109,312 @@ void setup () {
     tft.setRotation (1);
     tft.fillScreen (TFT_BLACK);
 
-    listDir (SD, "/", 0);
+    // listDir (SD, "/", 0);
+    // Serial.println ();
 
     Serial.println ("SD and TFT initialization done.");
 
-    String title = "雨のシンデレラ";
-    String artist = "RYUSENEKEI";
-    String album = "TOKYO SNIPER";
+    tft.loadFont ("Functions_symbols", SD);
+    tft.showFont (2000);
 
-    uint32_t utf8_val [32];
-    uint8_t byte_counter = 0;
-    bool in_encoding = false;
-    uint8_t curr_byte = 0;
-    uint8_t char_count = 0;
+    #define PLAY_PAUSE_ICON         "⏯"
+    #define PREVIOUS_ICON           "⏮"
+    #define NEXT_ICON               "⏭"
+    #define LEFT_ICON               "⏴"
+    #define RIGHT_ICON              "⏵"
+    #define DIMMER_SCREEN_ICON      "🌣"
+    #define BRIGHTER_SCREEN_ICON    "☼"
+    #define LOWER_VOL_ICON          "🔉"
+    #define HIGHER_VOL_ICON         "🔊"
 
-    for (unsigned char c : title) {
-        curr_byte = static_cast <int> (c);
-        // Serial.printf ("%X", curr_byte);
-        utf8_val[char_count] += curr_byte;
+    tft.println (PLAY_PAUSE_ICON);
+    tft.println (PREVIOUS_ICON);
+    tft.println (NEXT_ICON);
+    tft.println (LEFT_ICON);
+    tft.println (RIGHT_ICON);
+    tft.println (DIMMER_SCREEN_ICON);
+    tft.println (BRIGHTER_SCREEN_ICON);
+    tft.println (LOWER_VOL_ICON);
+    tft.println (HIGHER_VOL_ICON);
 
-        if (!in_encoding) {
-            if (curr_byte >= 0xC0) {
-                in_encoding = true;
-                byte_counter = curr_byte >= 0xF0 ? 3 : (curr_byte >= 0xE0 ? 2 : 1);
-            } 
-        } else  byte_counter--;
+    tft.unloadFont ();
 
-        if (byte_counter == 0) {
-            in_encoding = false;
-            // Serial.printf ("| ");
-            char_count++;
-        } else  utf8_val[char_count] <<= 8;
 
-        // Serial.println ();
+    
+    // tft.loadFont (file_latin, SD);
+    // tft.setCursor (51, 90);
+    // tft.print ("Vandar Systems");
+    // tft.setCursor (56, 120);
+    // tft.print ("FM Transmitter");
+    // tft.unloadFont ();
+    
+    // tft.loadFont (file_latin, SD);
+    // Serial.println (tft.textWidth ("tems"));
+    // Serial.println (tft.textWidth ("tter"));
+    
 
-        for (uint32_t val : utf8_val) {
-            Serial.printf ("%X | %d", val, Check_Location (val));
-        }
-    }
+    // String title = "雨のシンデレラ - RYUSENKEI";
+    // String artist = "RYUSENEKEI";
+    // String album = "TOKYO SNIPER";
 
-    tft.setTextWrap (true, true);
-    tft.setTextColor (TFT_WHITE, TFT_BLACK);
-    tft.setCursor (10, 70);
+    // uint32_t utf8_val [32] = { 0 };
+    // uint8_t byte_counter = 0;
+    // bool in_encoding = false;
+    // uint8_t curr_byte = 0;
+    // uint8_t char_count = 0;
 
-    for (uint8_t i = 0, j = 0; i <= title.length (); j++) {
-        uint32_t val = utf8_val[j];
+    // for (unsigned char c : title) {
+    //     curr_byte = static_cast <int> (c);
+    //     // Serial.printf ("%X", curr_byte);
+    //     utf8_val[char_count] += curr_byte;
 
-        switch (Check_Location (val)) {
-            case latin: {
-                tft.loadFont (file_latin, SD);
-                tft.print (title.substring (i, ++i));
-                tft.unloadFont ();
-            } break;
+    //     if (!in_encoding) {
+    //         if (curr_byte >= 0xC0) {
+    //             in_encoding = true;
+    //             byte_counter = curr_byte >= 0xF0 ? 3 : (curr_byte >= 0xE0 ? 2 : 1);
+    //         } 
+    //     } else  byte_counter--;
 
-            case cyrillic_greek: {
-                tft.loadFont (file_cyrillic_greek, SD);
-                tft.print (title.substring (i, i + 2));
-                tft.unloadFont ();
-                i += 2;
-            } break;
+    //     if (byte_counter == 0) {
+    //         in_encoding = false;
+    //         // Serial.printf ("| ");
+    //         char_count++;
+    //     } else  utf8_val[char_count] <<= 8;
 
-            case ex_latin: {
-                tft.loadFont (file_ex_latin, SD);
-                tft.print (title.substring (i, i + 2));
-                tft.unloadFont ();
-                i += 2;
-            } break;
+    //     // Serial.println ();
 
-            case japanese: {
-                tft.loadFont (file_japanese, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //     for (uint32_t val : utf8_val) {
+    //         if (val == 0)   continue;
+    //         Serial.printf ("%X | %X\n", val, Check_Location (val));
+    //     }
+    // }
+    // Serial.println ();
 
-            case hangul_1: {
-                tft.loadFont (file_hangul_1, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    // // tft.setTextWrap (true, true);
+    // // tft.fillScreen (TFT_BLACK);
+    // tft.setTextColor (TFT_WHITE);
+    // tft.setCursor (10, 70);
 
-            case hangul_2: {
-                tft.loadFont (file_hangul_2, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    // for (uint8_t i = 0, j = 0; i <= title.length (); j++) {
+    //     uint32_t val = utf8_val[j];
 
-            case hangul_3_1: {
-                tft.loadFont (file_hangul_3_1, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //     if (Check_Location (val) == FONT_ERROR) continue;
+        
+    //     // Serial.printf ("%d | %d\n", Check_Location (val), val);
 
-            case hangul_3_2: {
-                tft.loadFont (file_hangul_3_2, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //     switch (Check_Location (val)) {
+    //         case latin: {
+    //             tft.loadFont (file_latin, SD);
+    //             tft.print (title.substring (i, i + 1));
+    //             tft.unloadFont ();
+    //             i++;
+    //         } break;
 
-            case hangul_4_1: {
-                tft.loadFont (file_hangul_4_1, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cyrillic_greek: {
+    //             tft.loadFont (file_cyrillic_greek, SD);
+    //             tft.print (title.substring (i, i + 2));
+    //             tft.unloadFont ();
+    //             i += 2;
+    //         } break;
+
+    //         case ex_latin: {
+    //             tft.loadFont (file_ex_latin, SD);
+    //             tft.print (title.substring (i, i + 2));
+    //             tft.unloadFont ();
+    //             i += 2;
+    //         } break;
+
+    //         case japanese: {
+    //             tft.loadFont (file_japanese, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
+
+    //         case hangul_1: {
+    //             tft.loadFont (file_hangul_1, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
+
+    //         case hangul_2: {
+    //             tft.loadFont (file_hangul_2, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
+
+    //         case hangul_3_1: {
+    //             tft.loadFont (file_hangul_3_1, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
+
+    //         case hangul_3_2: {
+    //             tft.loadFont (file_hangul_3_2, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
+
+    //         case hangul_4_1: {
+    //             tft.loadFont (file_hangul_4_1, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
             
-            case hangul_4_2: {
-                tft.loadFont (file_hangul_4_2, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case hangul_4_2: {
+    //             tft.loadFont (file_hangul_4_2, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case hangul_5_1: {
-                tft.loadFont (file_hangul_5_1, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case hangul_5_1: {
+    //             tft.loadFont (file_hangul_5_1, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case hangul_5_2: {
-                tft.loadFont (file_hangul_5_2, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case hangul_5_2: {
+    //             tft.loadFont (file_hangul_5_2, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_1: {
-                tft.loadFont (file_cj_1, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_1: {
+    //             tft.loadFont (file_cj_1, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_2_1: {
-                tft.loadFont (file_cj_2_1, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_2_1: {
+    //             tft.loadFont (file_cj_2_1, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_2_2: {
-                tft.loadFont (file_cj_2_2, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_2_2: {
+    //             tft.loadFont (file_cj_2_2, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_3: {
-                tft.loadFont (file_cj_3, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_3: {
+    //             tft.loadFont (file_cj_3, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_4_1: {
-                tft.loadFont (file_cj_4_1, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_4_1: {
+    //             tft.loadFont (file_cj_4_1, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_4_2: {
-                tft.loadFont (file_cj_4_2, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_4_2: {
+    //             tft.loadFont (file_cj_4_2, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_5_1: {
-                tft.loadFont (file_cj_5_1, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_5_1: {
+    //             tft.loadFont (file_cj_5_1, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_5_2: {
-                tft.loadFont (file_cj_5_2, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_5_2: {
+    //             tft.loadFont (file_cj_5_2, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_6_1: {
-                tft.loadFont (file_cj_6_1, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_6_1: {
+    //             tft.loadFont (file_cj_6_1, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_6_2: {
-                tft.loadFont (file_cj_6_2, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_6_2: {
+    //             tft.loadFont (file_cj_6_2, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_7_1: {
-                tft.loadFont (file_cj_7_1, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_7_1: {
+    //             tft.loadFont (file_cj_7_1, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_7_2: {
-                tft.loadFont (file_cj_7_2, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_7_2: {
+    //             tft.loadFont (file_cj_7_2, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_8_1: {
-                tft.loadFont (file_cj_8_1, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_8_1: {
+    //             tft.loadFont (file_cj_8_1, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_8_2: {
-                tft.loadFont (file_cj_8_2, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_8_2: {
+    //             tft.loadFont (file_cj_8_2, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_9: {
-                tft.loadFont (file_cj_9, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_9: {
+    //             tft.loadFont (file_cj_9, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_10: {
-                tft.loadFont (file_cj_10, SD);
-                tft.print (title.substring (i, i + 3));
-                tft.unloadFont ();
-                i += 3;
-            } break;
+    //         case cj_10: {
+    //             tft.loadFont (file_cj_10, SD);
+    //             tft.print (title.substring (i, i + 3));
+    //             tft.unloadFont ();
+    //             i += 3;
+    //         } break;
 
-            case cj_11: {
-                tft.loadFont (file_cj_11, SD);
-                tft.print (title.substring (i, i + 4));
-                tft.unloadFont ();
-                i += 4;
-            } break;
+    //         case cj_11: {
+    //             tft.loadFont (file_cj_11, SD);
+    //             tft.print (title.substring (i, i + 4));
+    //             tft.unloadFont ();
+    //             i += 4;
+    //         } break;
 
-            case cj_12: {
-                tft.loadFont (file_cj_12, SD);
-                tft.print (title.substring (i, i + 4));
-                tft.unloadFont ();
-                i += 4;
-            } break;
-        }
-    } 
-    tft.println ();
+    //         case cj_12: {
+    //             tft.loadFont (file_cj_12, SD);
+    //             tft.print (title.substring (i, i + 4));
+    //             tft.unloadFont ();
+    //             i += 4;
+    //         } break;
+    //     }
+    // } 
+    // tft.println ();
 }
 
 void loop () {}
