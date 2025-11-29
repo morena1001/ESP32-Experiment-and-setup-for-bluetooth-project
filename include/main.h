@@ -1,3 +1,46 @@
+#include <Arduino.h>
+#include <Wire.h>
+#include <Adafruit_Si4713.h>
+#include <Preferences.h>
+#include <BluetoothA2DPSink.h>
+// #include <driver/dac.h>
+#include <SD.h>
+#include <TFT_eSPI.h>
+
+struct data_t {
+    // SCREEN CONTROLLER OBJECT
+    TFT_eSPI tft = TFT_eSPI ();
+
+    // SWITCH FUNCTION VARIABLES
+    uint8_t function;
+    uint8_t previous_function;
+    
+    
+    // DEFAULT VALUES FOR THE STATION, VOLUME, AND BRIGHTNESS
+    uint16_t radio_station = 9390;
+    uint8_t phone_volume = 127;
+    uint8_t screen_brightness = 127;
+    
+    // VARIABLES FOR SONG METADATA
+    String song_title = "";
+    String song_artist = "";
+    String song_album = "";
+    
+    // TEMPORARY TEXT TIMER VARIABLES
+    unsigned long temp_text_start = 0;
+    unsigned long temp_text_duration = 0;
+};
+
+/*
+ * FUNCTION PROTOTYPES
+ */
+void Load_Intro_Screen (data_t &data);
+void Print_Song_Data (data_t &data);
+void Print_Perma_Text (data_t &data, String text);
+void Print_Temp_Text (data_t &data, String text, uint32_t ms);
+void Print_Text (data_t &data, uint8_t song_type);
+void Change_Function (data_t &data);
+
 #define RESETPIN    13
 
 #define PLAYBACK_FUNCTION       1

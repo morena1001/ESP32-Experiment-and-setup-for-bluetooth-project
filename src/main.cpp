@@ -1,214 +1,339 @@
-// #include <Arduino.h>
-// #include <Wire.h>
-// #include <Adafruit_Si4713.h>
-// #include "Preferences.h"
-// #include "BluetoothA2DPSink.h"
-// #include "driver/dac.h"
+#include <main.h>
 
-// #define RESETPIN  13
-// #define FMSTATION 9390
+void Load_Intro_Screen (data_t &data) {
+    data.tft.loadFont (file_main_latin, SD);
+    data.tft.setCursor (51, 90);
+    data.tft.print ("Vandar Systems");
+    data.tft.setCursor (56, 120);
+    data.tft.print ("FM Transmitter");
+    data.tft.unloadFont ();
+}
 
-// /*
-// if (i2c_dev)
-//     delete i2c_dev;
-//     Serial.println ("HELLO");
-//     reset();
-//     Serial.println ("HELLO 1");
-//   i2c_dev = new Adafruit_I2CDevice(addr, theWire);
-//   if (!i2c_dev->begin()) {
-//     // i2c_dev = new Adafruit_I2CDevice (SI4710_ADDR0, theWire);
-//     // if (!i2c_dev->begin ()) 
-//       return false;
-//   }
-//   Serial.println ("HELLO 2");
-  
-//   powerUp();
-//   Serial.println ("HELLO 3");
-//   Serial.println (getRev ());
-//   // check for Si4713
-//   if (getRev() != 13)
-//   return false;
-//   Serial.println ("HELLO 4");
+void Print_Song_Data (data_t &data) {
+    data.tft.fillRect (0, 20, 320, 115, TFT_BLACK);
+    Print_Text (data, TEXT_TYPE_SONG_TITLE);
+    Print_Text (data, TEXT_TYPE_SONG_ALBUM);
+    Print_Text (data, TEXT_TYPE_SONG_ARTIST);
+}
 
-//   return true;
-// */
+void Print_Perma_Text (data_t &data, String text) {
+    data.tft.loadFont (file_main_latin, SD);
+    data.tft.fillRect (0, 70, 320, 65, TFT_BLACK);
+    data.tft.setCursor (10, 70);
+    data.tft.print (text);
+    data.tft.unloadFont ();
+}
 
-// Adafruit_Si4713 radio = Adafruit_Si4713 (RESETPIN);
-// AnalogAudioStream out;
-// BluetoothA2DPSink a2dp_sink (out);
-// Preferences preferences;
+void Print_Temp_Text (data_t &data, String text, uint32_t ms) {
+    Serial.println ("STARTING TEMP TEXT");
+    data.tft.loadFont (file_main_latin, SD);
+    data.tft.fillRect (0, 70, 320, 65, TFT_BLACK);
+    data.tft.setCursor (10, 70);
+    data.tft.print (text);
+    data.tft.unloadFont ();
 
-// bool is_active = true;
-// bool sent_connected_message = false;
-// bool sent_disconnected_message = false;
+    data.temp_text_start = millis ();
+    data.temp_text_duration = ms;
+}
 
-// const int pp_pin = 32; // GPIO pin for the pause/play button
-// const int next_pin = 33; // GPIO pin for the next button
-// const int prev_pin = 27; // GPIO pin for the previous button
+void Print_Text (data_t &data, uint8_t song_type) {
+    String text = "";
+    bool maintext = false;
 
-// unsigned long pp_last_db_time = 0;
-// unsigned long next_last_db_time = 0;
-// unsigned long prev_last_db_time = 0;
+    switch (song_type) {
+        case TEXT_TYPE_SONG_TITLE:
+            text = data.song_title;
+            data.tft.fillRect (0, 60, 320, 50, TFT_BLACK);
+            data.tft.setCursor (10, 70);
+            maintext = true;
+            break;
+        case TEXT_TYPE_SONG_ALBUM:
+            text = data.song_album;
+            data.tft.fillRect (0, 135, 320, 40, TFT_BLACK);
+            data.tft.setCursor (20, 135);
+            break;
+            
+            case TEXT_TYPE_SONG_ARTIST:
+            text = data.song_artist;
+            data.tft.fillRect (0, 110, 320, 40, TFT_BLACK);
+            data.tft.setCursor (20, 110);
+            break;
+    }
 
-// unsigned long pp_db_delay = 50;
-// unsigned long next_db_delay = 50;
-// unsigned long prev_db_delay = 50;
+    uint32_t val = 0;
+    
+    for (int i = 0; i < text.length (); ) {
+        val = (0xFF & static_cast <uint32_t> (text[i]));
 
-// int pp_state;            
-// int next_state;            
-// int prev_state;            
+        if (val >= 0xF0) {
+            val <<= 24;
+            val += (0xFF0000 & (static_cast <uint32_t> (text[i + 1]) << 16)) + (0xFF00 & (static_cast <uint32_t> (text[i + 2]) << 8)) + (0xFF & static_cast <uint32_t> (text[i + 3]));
+        } else if (val >= 0xE0) {
+            val <<= 16;
+            val += (0xFF00 & (static_cast <uint32_t> (text[i + 1]) << 8)) + (0xFF & static_cast <uint32_t> (text[i + 2]));
+        } else if (val >= 0xC0) {
+            val <<= 2;
+            val += (0xFF & static_cast <uint32_t> (text[i + 1]));
+        }
 
-// int pp_last_state = LOW;  
-// int next_last_state = LOW;  
-// int prev_last_state = LOW; 
+        switch (CHECK_LOCATION (val)) {
+            case latin: {
+                data.tft.loadFont (maintext ? file_main_latin : file_sub_latin, SD);
+                data.tft.print (text.substring (i, i + 1));
+                data.tft.unloadFont ();
+                i++;
+            } break;
 
-// void avrc_metadata_callback (uint8_t id, const uint8_t *text) {
-//   Serial.printf ("==> AVRC metadata rsp: attribute id 0x%x, %s\n", id, text);
-//   // if (id == ESP_AVRC_MD_ATTR_PLAYING_TIME) {
-//   //   uint32_t playtime = String ((char*) text).toInt ();
-//   //   Serial.printf ("==> Playing time is %d ms (%d seconds)\n", playtime, (int) round (playtime/1000.0));
-//   // }
-// }
+            case cyrillic_greek: {
+                data.tft.loadFont (maintext ? file_main_cyrillic_greek : file_sub_cyrillic_greek, SD);
+                data.tft.print (text.substring (i, i + 2));
+                data.tft.unloadFont ();
+                i += 2;
+            } break;
 
-// void avrc_rn_playstatus_callback (esp_avrc_playback_stat_t playback) {
-//   switch (playback) {
-//     case esp_avrc_playback_stat_t::ESP_AVRC_PLAYBACK_PAUSED:
-//       // Serial.println ("Stopped.");
-//       is_active = false;
-//       break;
-//     case esp_avrc_playback_stat_t::ESP_AVRC_PLAYBACK_PLAYING:
-//       // Serial.println ("Playing.");
-//       is_active = true;
-//       break;
-//     // default:
-//       // Serial.printf ("Got unknown playback status %d\n", playback);
-//   }
-// }
+            case ex_latin: {
+                data.tft.loadFont (maintext ? file_main_ex_latin : file_sub_ex_latin, SD);
+                data.tft.print (text.substring (i, i + 2));
+                data.tft.unloadFont ();
+                i += 2;
+            } break;
 
-// void setup () {
-//   Serial.begin (115200);
-//   Serial.println ("Starting radio");
+            case japanese: {
+                data.tft.loadFont (maintext ? file_main_japanese : file_sub_japanese, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-//   if (!radio.begin ()) {
-//     Serial.println ("Couldn't find radio");
-//     while (!radio.begin ()) {
-//       Serial.println ("Couldn't find radio");
-//     }
-//   }
-//   Serial.println ("Radio found");
+            case hangul_1: {
+                data.tft.loadFont (maintext ? file_main_hangul_1 : file_sub_hangul_1, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-//   radio.setTXpower(115);  // dBuV, 88-115 max
-//   Serial.print("\nTuning into "); 
-//   Serial.print(FMSTATION/100); 
-//   Serial.print('.'); 
-//   Serial.println(FMSTATION % 100);
-//   radio.tuneFM(FMSTATION); // 102.3 mhz
+            case hangul_2: {
+                data.tft.loadFont (maintext ? file_main_hangul_2 : file_sub_hangul_2, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-//   // dac_output_enable (DAC_CHANNEL_1);
-//   // dac_output_enable (DAC_CHANNEL_2);
+            case hangul_3_1: {
+                data.tft.loadFont (maintext ? file_main_hangul_3_1 : file_sub_hangul_3, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-//   pinMode (pp_pin, INPUT);
-//   pinMode (next_pin, INPUT);
-//   pinMode (prev_pin, INPUT);
+            case hangul_3_2: {
+                data.tft.loadFont (maintext ? file_main_hangul_3_2 : file_sub_hangul_3, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-//   a2dp_sink.set_avrc_metadata_attribute_mask (ESP_AVRC_MD_ATTR_TITLE | ESP_AVRC_MD_ATTR_ARTIST | ESP_AVRC_MD_ATTR_ALBUM );
-//   a2dp_sink.set_avrc_metadata_callback (avrc_metadata_callback);
-//   a2dp_sink.set_avrc_rn_playstatus_callback (avrc_rn_playstatus_callback);
+            case hangul_4_1: {
+                data.tft.loadFont (maintext ? file_main_hangul_4_1 : file_sub_hangul_4, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
+            
+            case hangul_4_2: {
+                data.tft.loadFont (maintext ? file_main_hangul_4_2 : file_sub_hangul_4, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-//   a2dp_sink.start ("MyMusic", true);
-//   Serial.println ("Started bluetooth");
+            case hangul_5_1: {
+                data.tft.loadFont (maintext ? file_main_hangul_5_1 : file_sub_hangul_5, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-//   preferences.begin ("connections", true);
-//   bool prev_init = preferences.isKey ("prev");
-//   if (prev_init) {
-//     esp_bd_addr_t prev_address;
-//     preferences.getBytes ("prev", prev_address, ESP_BD_ADDR_LEN);
-//     Serial.print ("Checking to see if ");
-//     Serial.print (a2dp_sink.to_str (prev_address));
-//     Serial.println (" Connects");
-//     if (a2dp_sink.connect_to (prev_address)) {
-//       Serial.print ("Reconnected to previously connected device: ");
-//       Serial.println (a2dp_sink.to_str (prev_address));
-//       a2dp_sink.set_volume (100);
-//     }
-//   }
-//   preferences.end ();
-// }
+            case hangul_5_2: {
+                data.tft.loadFont (maintext ? file_main_hangul_5_2 : file_sub_hangul_5, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-// void loop () {
-//   // Read from the input button
-//   int pp_reading = digitalRead (pp_pin);
-//   int next_reading = digitalRead (next_pin);
-//   int prev_reading = digitalRead (prev_pin);
+            case cj_1: {
+                data.tft.loadFont (maintext ? file_main_cj_1 : file_sub_cj_1, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-//   // If switch is changed due to noise or pressing, reset debounce timer
-//   if (pp_reading != pp_last_state)       pp_last_db_time = millis();
-//   if (next_reading != next_last_state)   next_last_db_time = millis();
-//   if (prev_reading != prev_last_state)   prev_last_db_time = millis();
+            case cj_2_1: {
+                data.tft.loadFont (maintext ? file_main_cj_2_1 : file_sub_cj_2, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-//   // If debounce delay is reached, update the state of the button, and if high, send the message
-//   if ((millis() - pp_last_db_time) > pp_db_delay) {
-//     if (pp_reading != pp_state) {
-//       pp_state = pp_reading;
-      
-//       if (pp_state == HIGH) {
-//         is_active = !is_active;
-//         if (is_active) {
-//           Serial.println ("play");
-//           a2dp_sink.play ();
-//         } else {
-//           Serial.println ("pause");
-//           a2dp_sink.pause ();
-//         }
-//         // bleKeyboard.write (KEY_MEDIA_PLAY_PAUSE);
-//       }
-//     }
-//   }
+            case cj_2_2: {
+                data.tft.loadFont (maintext ? file_main_cj_2_2 : file_sub_cj_2, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-//   if ((millis() - next_last_db_time) > next_db_delay) {
-//     if (next_reading != next_state) {
-//       next_state = next_reading;
-      
-//       if (next_state == HIGH) {
-//         Serial.println ("Next");
-//         a2dp_sink.next ();
-//         // bleKeyboard.write (KEY_MEDIA_NEXT_TRACK);
-//       }
-//     }
-//   }
+            case cj_3: {
+                data.tft.loadFont (maintext ? file_main_cj_3 : file_sub_cj_3, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-//   if ((millis() - prev_last_db_time) > prev_db_delay) {
-//     if (prev_reading != prev_state) {
-//       prev_state = prev_reading;
-      
-//       if (prev_state == HIGH) {
-//         Serial.println ("Previous");
-//         a2dp_sink.previous ();
-//         // bleKeyboard.write (KEY_MEDIA_PREVIOUS_TRACK);
-//       }
-//     }
-//   }
-  
-//   // Update previous button state
-//   pp_last_state = pp_reading;
-//   next_last_state = next_reading;
-//   prev_last_state = prev_reading;
+            case cj_4_1: {
+                data.tft.loadFont (maintext ? file_main_cj_4_1 : file_sub_cj_4, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-//   // Send a device conntected message once if a device is connected
-//   if (a2dp_sink.is_connected () && !sent_connected_message) {
-//     sent_connected_message = true;
-//     sent_disconnected_message = false;
-//     Serial.println ("Device connected");
-//     a2dp_sink.set_volume (100);
+            case cj_4_2: {
+                data.tft.loadFont (maintext ? file_main_cj_4_2 : file_sub_cj_4, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
 
-//     preferences.begin ("connections", false);
-//     preferences.putBytes ("prev", a2dp_sink.get_current_peer_address (), ESP_BD_ADDR_LEN);
-//     Serial.print ("Put address to memory: ");
-//     Serial.println (a2dp_sink.to_str (*(a2dp_sink.get_current_peer_address ())));
-//     preferences.end ();
-//   } else if (!a2dp_sink.is_connected () && !sent_disconnected_message) {
-//     sent_disconnected_message = true;
-//     sent_connected_message = false;
-//     Serial.println ("Device disconnected");
-//   }
-// }
+            case cj_5_1: {
+                data.tft.loadFont (maintext ? file_main_cj_5_1 : file_sub_cj_5, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
+
+            case cj_5_2: {
+                data.tft.loadFont (maintext ? file_main_cj_5_2 : file_sub_cj_5, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
+
+            case cj_6_1: {
+                data.tft.loadFont (maintext ? file_main_cj_6_1 : file_sub_cj_6, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
+
+            case cj_6_2: {
+                data.tft.loadFont (maintext ? file_main_cj_6_2 : file_sub_cj_6, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
+
+            case cj_7_1: {
+                data.tft.loadFont (maintext ? file_main_cj_7_1 : file_sub_cj_7, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
+
+            case cj_7_2: {
+                data.tft.loadFont (maintext ? file_main_cj_7_2 : file_sub_cj_7, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
+
+            case cj_8_1: {
+                data.tft.loadFont (maintext ? file_main_cj_8_1 : file_sub_cj_8, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
+
+            case cj_8_2: {
+                data.tft.loadFont (maintext ? file_main_cj_8_2 : file_sub_cj_8, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
+
+            case cj_9: {
+                data.tft.loadFont (maintext ? file_main_cj_9 : file_sub_cj_9, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
+
+            case cj_10: {
+                data.tft.loadFont (maintext ? file_main_cj_10 : file_sub_cj_10, SD);
+                data.tft.print (text.substring (i, i + 3));
+                data.tft.unloadFont ();
+                i += 3;
+            } break;
+
+            case cj_11: {
+                data.tft.loadFont (maintext ? file_main_cj_11 : file_sub_cj_11, SD);
+                data.tft.print (text.substring (i, i + 4));
+                data.tft.unloadFont ();
+                i += 4;
+            } break;
+
+            case cj_12: {
+                data.tft.loadFont (maintext ? file_main_cj_12 : file_sub_cj_12, SD);
+                data.tft.print (text.substring (i, i + 4));
+                data.tft.unloadFont ();
+                i += 4;
+            } break;
+        }
+    }
+}
+
+void Change_Function (data_t &data) {
+    if (data.function == PLAYBACK_FUNCTION && data.previous_function != data.function) {
+        data.previous_function = data.function;
+        data.tft.loadFont (file_functions_symbols, SD);
+        data.tft.fillRect (10, 215, 30, 30, TFT_BLACK);
+        data.tft.setCursor (10, 215);
+        data.tft.print (PREVIOUS_ICON);
+        data.tft.fillRect (160, 215, 30, 30, TFT_BLACK);
+        data.tft.setCursor (160, 215);
+        data.tft.print (NEXT_ICON);
+        data.tft.unloadFont ();
+    }
+    else if (data.function == STATION_FUNCTION && data.previous_function != data.function) {
+        data.previous_function = data.function;
+        data.tft.loadFont (file_functions_symbols, SD);
+        data.tft.fillRect (10, 215, 30, 30, TFT_BLACK);
+        data.tft.setCursor (10, 215);
+        data.tft.print (LEFT_ICON);
+        data.tft.fillRect (160, 215, 30, 30, TFT_BLACK);
+        data.tft.setCursor (160, 215);
+        data.tft.print (RIGHT_ICON);
+        data.tft.unloadFont ();
+    }
+    else if (data.function == BRIGHTNESS_FUNCTION && data.previous_function != data.function) {
+        data.previous_function = data.function;
+        data.tft.loadFont (file_functions_symbols, SD);
+        data.tft.fillRect (10, 215, 30, 30, TFT_BLACK);
+        data.tft.setCursor (10, 215);
+        data.tft.print (DIMMER_SCREEN_ICON);
+        data.tft.fillRect (160, 215, 30, 30, TFT_BLACK);
+        data.tft.setCursor (160, 215);
+        data.tft.print (BRIGHTER_SCREEN_ICON);
+        data.tft.unloadFont ();
+    }
+    else if (data.function == VOLUME_FUNCTION && data.previous_function != data.function) {
+        data.previous_function = data.function;
+        data.tft.loadFont (file_functions_symbols, SD);
+        data.tft.fillRect (10, 215, 30, 30, TFT_BLACK);
+        data.tft.setCursor (10, 215);
+        data.tft.print (LOWER_VOL_ICON);
+        data.tft.fillRect (160, 215, 30, 30, TFT_BLACK);
+        data.tft.setCursor (160, 215);
+        data.tft.print (HIGHER_VOL_ICON);
+        data.tft.unloadFont ();
+    }
+}
+
