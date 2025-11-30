@@ -41,21 +41,21 @@ void In_Task_Handler (void* param);
  *
  * MIGHT SWITCH TO INTERRUPTS
  */
-// unsigned long pp_last_db_time = 0;
-// unsigned long next_last_db_time = 0;
-// unsigned long prev_last_db_time = 0;
+unsigned long pp_last_db_time = 0;
+unsigned long next_last_db_time = 0;
+unsigned long prev_last_db_time = 0;
 
-// unsigned long pp_db_delay = 50;
-// unsigned long next_db_delay = 50;
-// unsigned long prev_db_delay = 50;
+unsigned long pp_db_delay = 50;
+unsigned long next_db_delay = 50;
+unsigned long prev_db_delay = 50;
 
-// int pp_state;            
-// int next_state;            
-// int prev_state;            
+int pp_state;            
+int next_state;            
+int prev_state;            
 
-// int pp_last_state = LOW;  
-// int next_last_state = LOW;  
-// int prev_last_state = LOW; 
+int pp_last_state = LOW;  
+int next_last_state = LOW;  
+int prev_last_state = LOW; 
 
 /*
  * STATE VARIABLES FOR FUNCTION SWTICH PINS
@@ -96,11 +96,11 @@ void avrc_metadata_callback (uint8_t id, const uint8_t *text) {
 void avrc_rn_playstatus_callback (esp_avrc_playback_stat_t playback) {
     switch (playback) {
     case esp_avrc_playback_stat_t::ESP_AVRC_PLAYBACK_PAUSED:
-        // Serial.println ("Stopped.");
+        Serial.println ("Stopped.");
         is_active = false;
         break;
     case esp_avrc_playback_stat_t::ESP_AVRC_PLAYBACK_PLAYING:
-        // Serial.println ("Playing.");
+        Serial.println ("Playing.");
         is_active = true;
         break;
     default:
@@ -135,13 +135,13 @@ void setup () {
     Load_Intro_Screen (data);
 
     // SET UP buttons, switches, and interrupts
-    // pinMode (pp_pin, INPUT);
-    // pinMode (next_pin, INPUT);
-    // pinMode (prev_pin, INPUT);
-    // pinMode (func_1_pin, INPUT);
-    // pinMode (func_2_pin, INPUT);
-    // pinMode (func_3_pin, INPUT);
-    // pinMode (func_4_pin, INPUT);
+    pinMode (pp_pin, INPUT);
+    pinMode (next_pin, INPUT);
+    pinMode (prev_pin, INPUT);
+    pinMode (func_1_pin, INPUT);
+    pinMode (func_2_pin, INPUT);
+    pinMode (func_3_pin, INPUT);
+    pinMode (func_4_pin, INPUT);
 
     // attachInterrupt (pp_pin, Middle_Button, CHANGE);
     // attachInterrupt (next_pin, Left_Button, CHANGE);
@@ -312,7 +312,61 @@ void loop () {
 // }
 
 void In_Task_Handler (void* param) {
-    for (;;) {
+    while (true) {
         delay (1);
+        // Read from the input button
+        int pp_reading = digitalRead (pp_pin);
+        int next_reading = digitalRead (next_pin);
+        int prev_reading = digitalRead (prev_pin);
+
+        // If switch is changed due to noise or pressing, reset debounce timer
+        if (pp_reading != pp_last_state)       pp_last_db_time = millis();
+        if (next_reading != next_last_state)   next_last_db_time = millis();
+        if (prev_reading != prev_last_state)   prev_last_db_time = millis();
+
+        // If debounce delay is reached, update the state of the button, and if high, send the message
+        if ((millis() - pp_last_db_time) > pp_db_delay) {
+            if (pp_reading != pp_state) {
+                pp_state = pp_reading;
+                
+                if (pp_state == HIGH) {
+                    is_active = !is_active;
+                    if (is_active) {
+                        Serial.println ("play");
+                        a2dp_sink.play ();
+                    } else {
+                        Serial.println ("pause");
+                        a2dp_sink.pause ();
+                    }
+                }
+            }
+        }
+
+        if ((millis() - next_last_db_time) > next_db_delay) {
+            if (next_reading != next_state) {
+                next_state = next_reading;
+                
+                if (next_state == HIGH) {
+                    Serial.println ("Next");
+                    a2dp_sink.next ();
+                }
+            }
+        }
+
+        if ((millis() - prev_last_db_time) > prev_db_delay) {
+            if (prev_reading != prev_state) {
+                prev_state = prev_reading;
+                
+                if (prev_state == HIGH) {
+                    Serial.println ("Previous");
+                    a2dp_sink.previous ();
+                }
+            }
+        }
+        
+        // Update previous button state
+        pp_last_state = pp_reading;
+        next_last_state = next_reading;
+        prev_last_state = prev_reading;
     }
 }
