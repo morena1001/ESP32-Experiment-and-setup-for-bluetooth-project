@@ -29,6 +29,14 @@ const int func_3_pin = 36; // PIN FOR BRIGHTNESS SWITCH OPTION
 const int func_4_pin = 36; // PIN FOR VOLUME SWITCH OPTION
 
 /*
+ * HANDLERS AND FUNCTION PROTOTYPES FOR CONCURRENCY
+ */
+TaskHandle_t bt_task, in_task;
+void Bt_Task_Handler (void* param);
+void In_Task_Handler (void* param);
+
+
+/*
  * TIMER BASED DEBOUNCED VARIABLES FOR BUTTONS 
  *
  * MIGHT SWITCH TO INTERRUPTS
@@ -196,8 +204,16 @@ void setup () {
     data.tft.loadFont (file_main_latin, SD);
     data.tft.setCursor (10, 70);
     data.tft.print ("NOT CONNECTED");
-    data.tft.unloadFont ();
+    data.tft.unloadFont ();  
 
+    // SET UP TASKS FOR CONCURRENCY
+    xTaskCreatePinnedToCore (Bt_Task_Handler, "BT handler", 20000, NULL, 1, &bt_task, 1);
+    xTaskCreatePinnedToCore (In_Task_Handler, "Input handler", 10000, NULL, 1, &in_task, 0);
+}
+
+void loop () {}
+
+void Bt_Task_Handler (void* param) {
     // CHECK TO SEE IF THERE ARE ANY PREVIOUSLY CONNECTED DEVICES TO TRY TO RECONNECT
     preferences.begin ("Connections", true);
     bool prev_init = preferences.isKey ("prev");
@@ -217,9 +233,39 @@ void setup () {
             }
         }
     }
-    preferences.end ();   
-}
+    preferences.end (); 
 
-void loop () {
-    
+    Serial.println ("WHYYYYYYYYYYYYYYYYYYYYYYYYYY");
+
+    for (;;) {
+        // Remove temporary text once the timer finishes
+        if (data.temp_text_duration != 0 && millis () - data.temp_text_start > data.temp_text_duration) {
+            Print_Song_Data (data);
+            data.temp_text_duration = 0;
+        }
+
+        // Send a device conntected message once if a device is connected
+        if (a2dp_sink.is_connected () && !sent_connected_message) {
+            sent_connected_message = true;
+            sent_disconnected_message = false;
+            Serial.println ("Device connected");
+            Print_Temp_Text (data, "CONNECTED", DEFAULT_TEMP_TEXT_TIME);
+            a2dp_sink.set_volume (data.phone_volume);
+
+            preferences.begin ("connections", false);
+            preferences.putBytes ("prev", a2dp_sink.get_current_peer_address (), ESP_BD_ADDR_LEN);
+            Serial.printf ("Put address to memory: %s\n", a2dp_sink.to_str (*(a2dp_sink.get_current_peer_address ())));
+            preferences.end ();
+        } else if (!a2dp_sink.is_connected () && !sent_disconnected_message) {
+            sent_disconnected_message = true;
+            sent_connected_message = false;
+            Print_Perma_Text (data, "NOT CONNECTED");
+            Serial.println ("Device disconnected");
+        }
+    }
+}
+void In_Task_Handler (void* param) {
+    for (;;) {
+        delay (1);
+    }
 }
