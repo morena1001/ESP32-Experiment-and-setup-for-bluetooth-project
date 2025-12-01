@@ -29,6 +29,8 @@ struct data_t {
     // TEMPORARY TEXT TIMER VARIABLES
     unsigned long temp_text_start = 0;
     unsigned long temp_text_duration = 0;
+
+    SemaphoreHandle_t mutex = xSemaphoreCreateMutex ();
 };
 
 /*

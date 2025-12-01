@@ -44,30 +44,34 @@ void In_Task_Handler (void* param);
 unsigned long pp_last_db_time = 0;
 unsigned long next_last_db_time = 0;
 unsigned long prev_last_db_time = 0;
+unsigned long func_1_last_db_time = 0;
+unsigned long func_2_last_db_time = 0;
+unsigned long func_3_last_db_time = 0;
+unsigned long func_4_last_db_time = 0;
 
 unsigned long pp_db_delay = 50;
 unsigned long next_db_delay = 50;
 unsigned long prev_db_delay = 50;
+unsigned long func_1_db_delay = 50;
+unsigned long func_2_db_delay = 50;
+unsigned long func_3_db_delay = 50;
+unsigned long func_4_db_delay = 50;
 
 int pp_state;            
 int next_state;            
 int prev_state;            
+int func_1_state;
+int func_2_state;
+int func_3_state;
+int func_4_state;
 
 int pp_last_state = LOW;  
 int next_last_state = LOW;  
 int prev_last_state = LOW; 
-
-/*
- * STATE VARIABLES FOR FUNCTION SWTICH PINS
- */
-// volatile uint8_t func_1_state = LOW;
-// volatile uint8_t func_2_state = LOW;
-// volatile uint8_t func_3_state = LOW;
-// volatile uint8_t func_4_state = LOW;
-// uint8_t func_1_last_state = LOW;
-// uint8_t func_2_last_state = LOW;
-// uint8_t func_3_last_state = LOW;
-// uint8_t func_4_last_state = LOW;
+int func_1_last_state = LOW;
+int func_2_last_state = LOW;
+int func_3_last_state = LOW;
+int func_4_last_state = LOW;
 
 void avrc_metadata_callback (uint8_t id, const uint8_t *text) {
     if (a2dp_sink.is_connected ()) {
@@ -169,7 +173,7 @@ void setup () {
 
     if (digitalRead (func_1_pin)) {
         data.function = PLAYBACK_FUNCTION;
-        // func_1_state = HIGH;
+        Serial.println ("Function 1");
         data.tft.setCursor (10, 215);
         data.tft.print (PREVIOUS_ICON);
         data.tft.setCursor (160, 215);
@@ -177,7 +181,7 @@ void setup () {
     }
     else if (digitalRead (func_2_pin)) {
         data.function = STATION_FUNCTION;
-        // func_2_state = HIGH;
+        Serial.println ("Function 2");
         data.tft.setCursor (10, 215);
         data.tft.print (LEFT_ICON);
         data.tft.setCursor (160, 215);
@@ -185,7 +189,7 @@ void setup () {
     }
     else if (digitalRead (func_3_pin)) {
         data.function = BRIGHTNESS_FUNCTION;
-        // func_3_state = HIGH;
+        Serial.println ("Function 3");
         data.tft.setCursor (10, 215);
         data.tft.print (DIMMER_SCREEN_ICON);
         data.tft.setCursor (160, 215);
@@ -193,7 +197,7 @@ void setup () {
     }
     else if (digitalRead (func_4_pin)) {
         data.function = VOLUME_FUNCTION;
-        // func_4_state = HIGH;
+        Serial.println ("Function 4");
         data.tft.setCursor (10, 215);
         data.tft.print (LOWER_VOL_ICON);
         data.tft.setCursor (160, 215);
@@ -228,8 +232,10 @@ void setup () {
     preferences.end (); 
 
     // SET UP TASKS FOR CONCURRENCY
-    // xTaskCreatePinnedToCore (Bt_Task_Handler, "BT handler", 20000, NULL, 1, &bt_task, 1);
-    xTaskCreatePinnedToCore (In_Task_Handler, "Input handler", 10000, NULL, 1, &in_task, 0);
+    if (data.mutex != NULL) {
+        // xTaskCreatePinnedToCore (Bt_Task_Handler, "BT handler", 20000, NULL, 1, &bt_task, 1);
+        xTaskCreatePinnedToCore (In_Task_Handler, "Input handler", 10000, NULL, 1, &in_task, 0);
+    }
 }
 
 void loop () {
@@ -259,58 +265,6 @@ void loop () {
     }
 }
 
-// void Bt_Task_Handler (void* param) {
-//     // CHECK TO SEE IF THERE ARE ANY PREVIOUSLY CONNECTED DEVICES TO TRY TO RECONNECT
-//     preferences.begin ("Connections", true);
-//     bool prev_init = preferences.isKey ("prev");
-//     if (prev_init) {
-//         esp_bd_addr_t prev_addr;
-//         preferences.getBytes ("prev", prev_addr, ESP_BD_ADDR_LEN);
-//         Serial.printf ("Checking to see if %s connects\n", a2dp_sink.to_str (prev_addr));
-        
-//         unsigned long start = millis ();
-//         while (millis () - start <= 5000) {
-//             if (a2dp_sink.connect_to (prev_addr)) {
-//                 Serial.printf ("Reconnected to previously connected device: %s\n", a2dp_sink.to_str (prev_addr));
-//                 a2dp_sink.set_volume (data.phone_volume);
-//                 Print_Temp_Text (data, "CONNECTED", DEFAULT_TEMP_TEXT_TIME);
-//                 sent_connected_message = true;
-//                 break;
-//             }
-//         }
-//     }
-//     preferences.end (); 
-
-//     Serial.println ("WHYYYYYYYYYYYYYYYYYYYYYYYYYY");
-
-//     for (;;) {
-//         // Remove temporary text once the timer finishes
-//         if (data.temp_text_duration != 0 && millis () - data.temp_text_start > data.temp_text_duration) {
-//             Print_Song_Data (data);
-//             data.temp_text_duration = 0;
-//         }
-
-//         // Send a device conntected message once if a device is connected
-//         if (a2dp_sink.is_connected () && !sent_connected_message) {
-//             sent_connected_message = true;
-//             sent_disconnected_message = false;
-//             Serial.println ("Device connected");
-//             Print_Temp_Text (data, "CONNECTED", DEFAULT_TEMP_TEXT_TIME);
-//             a2dp_sink.set_volume (data.phone_volume);
-
-//             preferences.begin ("connections", false);
-//             preferences.putBytes ("prev", a2dp_sink.get_current_peer_address (), ESP_BD_ADDR_LEN);
-//             Serial.printf ("Put address to memory: %s\n", a2dp_sink.to_str (*(a2dp_sink.get_current_peer_address ())));
-//             preferences.end ();
-//         } else if (!a2dp_sink.is_connected () && !sent_disconnected_message) {
-//             sent_disconnected_message = true;
-//             sent_connected_message = false;
-//             Print_Perma_Text (data, "NOT CONNECTED");
-//             Serial.println ("Device disconnected");
-//         }
-//     }
-// }
-
 void In_Task_Handler (void* param) {
     while (true) {
         delay (1);
@@ -318,11 +272,19 @@ void In_Task_Handler (void* param) {
         int pp_reading = digitalRead (pp_pin);
         int next_reading = digitalRead (next_pin);
         int prev_reading = digitalRead (prev_pin);
+        int func_1_reading = digitalRead (func_1_pin);
+        int func_2_reading = digitalRead (func_2_pin);
+        int func_3_reading = digitalRead (func_3_pin);
+        int func_4_reading = digitalRead (func_4_pin);
 
         // If switch is changed due to noise or pressing, reset debounce timer
-        if (pp_reading != pp_last_state)       pp_last_db_time = millis();
-        if (next_reading != next_last_state)   next_last_db_time = millis();
-        if (prev_reading != prev_last_state)   prev_last_db_time = millis();
+        if (pp_reading != pp_last_state)            pp_last_db_time = millis();
+        if (next_reading != next_last_state)        next_last_db_time = millis();
+        if (prev_reading != prev_last_state)        prev_last_db_time = millis();
+        if (func_1_reading != func_1_last_state)    func_1_last_db_time = millis ();
+        if (func_2_reading != func_2_last_state)    func_2_last_db_time = millis ();
+        if (func_3_reading != func_3_last_state)    func_3_last_db_time = millis ();
+        if (func_4_reading != func_4_last_state)    func_4_last_db_time = millis ();
 
         // If debounce delay is reached, update the state of the button, and if high, send the message
         if ((millis() - pp_last_db_time) > pp_db_delay) {
@@ -363,10 +325,114 @@ void In_Task_Handler (void* param) {
                 }
             }
         }
+
+        if ((millis () - func_1_last_db_time) > func_1_db_delay) {
+            if (func_1_reading != func_1_state) {
+                func_1_state = func_1_reading;
+
+                if (func_1_state == HIGH) {
+                    Serial.println ("Function 1");
+                    data.function = PLAYBACK_FUNCTION;
+                    if (xSemaphoreTake (data.mutex, portMAX_DELAY) == pdTRUE) {
+                        int16_t x = data.tft.getCursorX ();
+                        int16_t y = data.tft.getCursorY ();
+                        data.tft.loadFont (file_functions_symbols, SD);
+                        data.tft.fillRect (10, 215, 30, 30, TFT_BLACK);
+                        data.tft.setCursor (10, 215);
+                        data.tft.print (PREVIOUS_ICON);
+                        data.tft.fillRect (160, 215, 30, 30, TFT_BLACK);
+                        data.tft.setCursor (160, 215);
+                        data.tft.print (NEXT_ICON);
+                        data.tft.unloadFont ();
+                        data.tft.setCursor (x, y);
+                        xSemaphoreGive (data.mutex);
+                    }
+                }
+            }
+        }
+
+        else if ((millis () - func_2_last_db_time) > func_2_db_delay) {
+            if (func_2_reading != func_2_state) {
+                func_2_state = func_2_reading;
+
+                if (func_2_state == HIGH) {
+                    Serial.println ("Function 2");
+                    data.function = STATION_FUNCTION;
+                    if (xSemaphoreTake (data.mutex, portMAX_DELAY) == pdTRUE) {
+                        int16_t x = data.tft.getCursorX ();
+                        int16_t y = data.tft.getCursorY ();
+                        data.tft.loadFont (file_functions_symbols, SD);
+                        data.tft.fillRect (10, 215, 30, 30, TFT_BLACK);
+                        data.tft.setCursor (10, 215);
+                        data.tft.print (LEFT_ICON);
+                        data.tft.fillRect (160, 215, 30, 30, TFT_BLACK);
+                        data.tft.setCursor (160, 215);
+                        data.tft.print (RIGHT_ICON);
+                        data.tft.unloadFont ();
+                        data.tft.setCursor (x, y);
+                        xSemaphoreGive (data.mutex);
+                    }
+                }
+            }
+        }
+
+        else if ((millis () - func_3_last_db_time) > func_3_db_delay) {
+            if (func_3_reading != func_3_state) {
+                func_3_state = func_3_reading;
+
+                if (func_3_state == HIGH) {
+                    Serial.println ("Function 3");
+                    data.function = BRIGHTNESS_FUNCTION;
+                    if (xSemaphoreTake (data.mutex, portMAX_DELAY) == pdTRUE) {
+                        int16_t x = data.tft.getCursorX ();
+                        int16_t y = data.tft.getCursorY ();
+                        data.tft.loadFont (file_functions_symbols, SD);
+                        data.tft.fillRect (10, 215, 30, 30, TFT_BLACK);
+                        data.tft.setCursor (10, 215);
+                        data.tft.print (DIMMER_SCREEN_ICON);
+                        data.tft.fillRect (160, 215, 30, 30, TFT_BLACK);
+                        data.tft.setCursor (160, 215);
+                        data.tft.print (BRIGHTER_SCREEN_ICON);
+                        data.tft.unloadFont ();
+                        data.tft.setCursor (x, y);
+                        xSemaphoreGive (data.mutex);
+                    }
+                }
+            }
+        }
+
+        else if ((millis () - func_4_last_db_time) > func_4_db_delay) {
+            if (func_4_reading != func_4_state) {
+                func_4_state = func_4_reading;
+
+                if (func_4_state == HIGH) {
+                    Serial.println ("Function 4");
+                    data.function = VOLUME_FUNCTION;
+                    if (xSemaphoreTake (data.mutex, portMAX_DELAY) == pdTRUE) {
+                        int16_t x = data.tft.getCursorX ();
+                        int16_t y = data.tft.getCursorY ();
+                        data.tft.loadFont (file_functions_symbols, SD);
+                        data.tft.fillRect (10, 215, 30, 30, TFT_BLACK);
+                        data.tft.setCursor (10, 215);
+                        data.tft.print (LOWER_VOL_ICON);
+                        data.tft.fillRect (160, 215, 30, 30, TFT_BLACK);
+                        data.tft.setCursor (160, 215);
+                        data.tft.print (HIGHER_VOL_ICON);
+                        data.tft.unloadFont ();
+                        data.tft.setCursor (x, y);
+                        xSemaphoreGive (data.mutex);
+                    }
+                }
+            }
+        }
         
         // Update previous button state
         pp_last_state = pp_reading;
         next_last_state = next_reading;
         prev_last_state = prev_reading;
+        func_1_last_state = func_1_reading;
+        func_2_last_state = func_2_reading;
+        func_3_last_state = func_3_reading;
+        func_4_last_state = func_4_reading;
     }
 }
