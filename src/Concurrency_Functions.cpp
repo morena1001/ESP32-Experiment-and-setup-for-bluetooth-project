@@ -24,9 +24,9 @@ const int pp_pin = 32; // PAUSE / PLAY BUTTON
 const int next_pin = 33; // NEXT BUTTON
 const int prev_pin = 27; // PREVIOUS BUTTON
 const int func_1_pin = 36; // PIN FOR PLAYBACK SWITCH OPTION
-const int func_2_pin = 36; // PIN FOR STATION SWITCH OPTION
-const int func_3_pin = 36; // PIN FOR BRIGHTNESS SWITCH OPTION
-const int func_4_pin = 36; // PIN FOR VOLUME SWITCH OPTION
+const int func_2_pin = 39; // PIN FOR STATION SWITCH OPTION
+const int func_3_pin = 34; // PIN FOR BRIGHTNESS SWITCH OPTION
+const int func_4_pin = 35; // PIN FOR VOLUME SWITCH OPTION
 
 /*
  * HANDLERS AND FUNCTION PROTOTYPES FOR CONCURRENCY
@@ -351,7 +351,7 @@ void In_Task_Handler (void* param) {
             }
         }
 
-        else if ((millis () - func_2_last_db_time) > func_2_db_delay) {
+        if ((millis () - func_2_last_db_time) > func_2_db_delay) {
             if (func_2_reading != func_2_state) {
                 func_2_state = func_2_reading;
 
@@ -376,7 +376,7 @@ void In_Task_Handler (void* param) {
             }
         }
 
-        else if ((millis () - func_3_last_db_time) > func_3_db_delay) {
+        if ((millis () - func_3_last_db_time) > func_3_db_delay) {
             if (func_3_reading != func_3_state) {
                 func_3_state = func_3_reading;
 
@@ -401,7 +401,7 @@ void In_Task_Handler (void* param) {
             }
         }
 
-        else if ((millis () - func_4_last_db_time) > func_4_db_delay) {
+        if ((millis () - func_4_last_db_time) > func_4_db_delay) {
             if (func_4_reading != func_4_state) {
                 func_4_state = func_4_reading;
 

@@ -83,6 +83,12 @@ void Print_Text (data_t &data, uint8_t song_type) {
     uint32_t val = 0;
     
     for (int i = 0; i < text.length (); ) {
+        switch (song_type) {
+            case TEXT_TYPE_SONG_TITLE:   if (text != data.song_title)       return;
+            case TEXT_TYPE_SONG_ALBUM:   if (text != data.song_album)       return;
+            case TEXT_TYPE_SONG_ARTIST:  if (text != data.song_artist)      return;
+        }
+        
         val = (0xFF & static_cast <uint32_t> (text[i]));
 
         if (val >= 0xF0) {
