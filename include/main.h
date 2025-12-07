@@ -52,6 +52,13 @@ void Change_Function (data_t &data);
 
 #define DEFAULT_TEMP_TEXT_TIME  2000
 
+#define HIGHEST_RADIO_FREQUENCY 10790
+#define LOWEST_RADIO_FREQUENCY  8810
+#define MAX_PHONE_VOLUME        127
+#define MIN_PHONE_VOLUME        0
+#define MAX_SCREEN_BRIGHTNESS   255
+#define MIN_SCREEN_BRIGHTNESS   0
+
 #define PLAY_PAUSE_ICON         "\u0700"
 #define PREVIOUS_ICON           "\u0701"
 #define NEXT_ICON               "\u0702"
